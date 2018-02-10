@@ -1,14 +1,18 @@
 from datetime import datetime, timedelta
 import logging
+import os
 
 from bs4 import BeautifulSoup
 import requests
 
-GFS_BASE_DIR = 'https://nomads.ncdc.noaa.gov/data/gfs4'
+GFS_BASE_DIR = 'https://nomads.ncdc.noaa.gov/data/gfs-avn-hi'
 LOG = logging.getLogger(__name__)
+GRIB_DIR = os.path.dirname(os.path.realpath(__file__)) + '/../grib_files'
 
 
-def get_latest_gfs_cycle():
+def get_latest_cycle():
+    if not os.path.exists(GRIB_DIR):
+        os.makedirs(GRIB_DIR)
     # Get latest link to latest month on page
     req = requests.get(GFS_BASE_DIR)
     soup = BeautifulSoup(req.content, 'html.parser')
@@ -86,21 +90,14 @@ def check_cycle_complete(dt):
 
 
 def download_cycle(dt):
-    for tau in range(0, 15, 3):
-        yield requests.get(
+    for tau in range(0, 6, 3):
+        req = requests.get(
             f'{GFS_BASE_DIR}/{dt:%Y%m}/{dt:%Y%m%d}/'
-            f'gfs_4_{dt:%Y%m%d}_{dt:%H%M}_{tau:03d}.grb2'
-        ).content
-
-
-if __name__ == '__main__':
-    import sys
-    logging.basicConfig(
-        format='%(asctime)-15s %(message)s',
-        stream=sys.stdout,
-        level=logging.INFO)
-    cycle = get_latest_gfs_cycle()
-    gribs = download_cycle(cycle)
-    for i, grib in enumerate(gribs):
-        print(grib)
-
+            f'gfs_3_{dt:%Y%m%d}_{dt:%H%M}_{tau:03d}.grb2', stream=True
+        )
+        out_file = f'{GRIB_DIR}/gfs_3_{dt:%Y%m%d}_{dt:%H%M}_{tau:03d}.grb2'
+        if req.status_code == 200:
+            with open(out_file, 'wb') as w:
+                for chunk in req.iter_content(1024):
+                    w.write(chunk)
+            yield out_file
