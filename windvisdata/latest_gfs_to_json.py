@@ -21,19 +21,19 @@ def latest_gfs_to_json():
         v_grib_data = grib_data.select(name='V component of wind')[0]
 
         data = {}
-        data['u_data'] = []
-        data['v_data'] = []
+        data['uData'] = []
+        data['vData'] = []
         for x in range(360):
-            data['u_data'].append([])
-            data['v_data'].append([])
+            data['uData'].append([])
+            data['vData'].append([])
             for y in range(180, -1, -1):
-                data['u_data'][x].append(float(u_grib_data['values'][y][x]))
-                data['v_data'][x].append(float(v_grib_data['values'][y][x]))
+                data['uData'][x].append(float(u_grib_data['values'][y][x]))
+                data['vData'][x].append(float(v_grib_data['values'][y][x]))
 
         json_file_path = (f'{JSON_DIR}/'
                           f'gfs_3_{cycle:%Y%m%d}_{cycle:%H%M}_{tau:03d}.json')
         with open(json_file_path, 'w') as w:
-            json.dump({'gfs_data': data}, w)
+            json.dump({'gfsData': data}, w)
         LOG.info(f'created {json_file_path}')
     with open(f'{JSON_DIR}/cycle', 'w') as w:
         w.write(f'{cycle:%Y%m%d_%H%M%S}\n')
