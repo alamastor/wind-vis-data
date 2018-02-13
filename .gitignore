@@ -2,3 +2,4 @@ venv
 grib_files
 json_files
 __pycache__
+*.log
