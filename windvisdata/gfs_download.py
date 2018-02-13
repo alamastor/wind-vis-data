@@ -55,7 +55,7 @@ def check_cycle_complete(dt):
 
 
 def download_cycle(dt):
-    for tau in range(0, 6, 3):
+    for tau in range(0, 183, 3):
         file_url = (f'{GFS_BASE_DIR}/gfs.{dt:%Y%m%d%H}/'
                     f'gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}')
         req = requests.get(file_url, stream=True)
