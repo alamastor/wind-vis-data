@@ -31,11 +31,11 @@ def latest_gfs_to_json():
                 data['vData'][x].append(float(v_grib_data['values'][y][x]))
 
         json_file_path = (f'{JSON_DIR}/'
-                          f'gfs_3_{cycle:%Y%m%d}_{cycle:%H%M}_{tau:03d}.json')
+                          f'gfs_100_{cycle:%Y%m%d_%H%M%S}_{tau:03d}.json')
         with open(json_file_path, 'w') as w:
             json.dump({'gfsData': data}, w)
         LOG.info(f'created {json_file_path}')
-    with open(f'{JSON_DIR}/cycle', 'w') as w:
-        w.write(f'{cycle:%Y%m%d_%H%M%S}\n')
+    with open(f'{JSON_DIR}/cycle.json', 'w') as w:
+        json.dump({'cycle': f'{cycle:%Y%m%d_%H%M%S}'}, w)
     LOG.info(f'completed downloading cycle {cycle:%Y%m%d_%H%M%S}')
 
