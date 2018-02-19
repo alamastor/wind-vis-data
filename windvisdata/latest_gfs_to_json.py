@@ -27,8 +27,8 @@ def latest_gfs_to_json():
             data['uData'].append([])
             data['vData'].append([])
             for y in range(180, -1, -1):
-                data['uData'][x].append(float(u_grib_data['values'][y][x]))
-                data['vData'][x].append(float(v_grib_data['values'][y][x]))
+                data['uData'][x].append(round(float(u_grib_data['values'][y][x]), 1))
+                data['vData'][x].append(round(float(v_grib_data['values'][y][x]), 1))
 
         json_file_path = (f'{JSON_DIR}/'
                           f'gfs_100_{cycle:%Y%m%d_%H%M%S}_{tau:03d}.json')
