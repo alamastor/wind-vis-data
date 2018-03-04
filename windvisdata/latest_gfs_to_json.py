@@ -61,6 +61,6 @@ def latest_gfs_to_json():
     with open(f'{JSON_DIR}/cycle.json', 'w') as w:
         json.dump({'cycle': f'{cycle:%Y%m%d_%H%M%S}'}, w)
 
-    for f in glob.glob(gfs_download.GRIB_PATH + '/*'):
+    for f in glob.glob(gfs_download.GRIB_ + '/*'):
         os.remove(f)
     LOG.info(f'completed downloading cycle {cycle:%Y%m%d_%H%M%S}')
