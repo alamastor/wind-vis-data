@@ -66,6 +66,6 @@ def latest_gfs_to_json():
             'maxWindSpeed': int(np.ceil(max_wind_spd))
         }, w)
 
-    for f in glob.glob(gfs_download.GRIB_ + '/*'):
+    for f in glob.glob(gfs_download.GRIB_DIR + '/*'):
         os.remove(f)
     LOG.info(f'completed downloading cycle {cycle:%Y%m%d_%H%M%S}')
