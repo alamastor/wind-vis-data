@@ -17,14 +17,14 @@ def latest_gfs_to_json():
         os.makedirs(JSON_DIR)
     cycle = gfs_download.get_latest_cycle()
     grib_files = []
-    max_wind_spd = 0
+    max_wind_speed = 0
     for i, grib_file_path in enumerate(gfs_download.download_cycle(cycle)):
         tau = i * 3
         grib_data = pygrib.open(grib_file_path)
         u_data = grib_data.select(name='U component of wind')[0]['values']
         v_data = grib_data.select(name='V component of wind')[0]['values']
         max_wind_speed = max(
-            np.max(np.sqrt(u_data**2 + v_data**2)), max_wind_spd)
+            np.max(np.sqrt(u_data**2 + v_data**2)), max_wind_speed)
 
         data_1_deg = {}
         data_1_deg['uData'] = []
@@ -63,7 +63,7 @@ def latest_gfs_to_json():
     with open(f'{JSON_DIR}/cycle.json', 'w') as w:
         json.dump({
             'cycle': f'{cycle:%Y%m%d_%H%M%S}',
-            'maxWindSpeed': int(np.ceil(max_wind_spd))
+            'maxWindSpeed': int(np.ceil(max_wind_speed))
         }, w)
 
     for f in glob.glob(gfs_download.GRIB_DIR + '/*'):
