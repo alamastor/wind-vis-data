@@ -16,8 +16,9 @@ def latest_gfs_to_json():
     latest_run = gfs_download.get_latest_complete_run()
     previous_run = cycle_file_datetime()
     if previous_run and latest_run <= previous_run:
-        LOG.info("Latest run %s has already been processed, doing nothing.",latest_run)
-    LOG.info("Processing latest run %s.",latest_run)
+        LOG.info("Latest run %s has already been processed, doing nothing.", latest_run)
+        return
+    LOG.info("Processing latest run %s.", latest_run)
     gfs_download.download_run(latest_run)
     gfs_run_to_json(latest_run)
     write_cycle_file(latest_run)
@@ -27,21 +28,26 @@ def latest_gfs_to_json():
 
 def run_max_wind_speed(run_datetime):
     max_wind_speed = 0
-    for tau in range(0, gfs_download.GFS_HOURS+gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL):
-        grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime,tau)))
+    for tau in range(
+        0, gfs_download.GFS_HOURS + gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL
+    ):
+        grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime, tau)))
         u_data = grib_data.select(name="U component of wind")[0]["values"]
         v_data = grib_data.select(name="V component of wind")[0]["values"]
         max_wind_speed = max(np.max(np.sqrt(u_data ** 2 + v_data ** 2)), max_wind_speed)
     return max_wind_speed
 
+
 def gfs_run_to_json(run_datetime):
-    for tau in range(0, gfs_download.GFS_HOURS+gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL):
+    for tau in range(
+        0, gfs_download.GFS_HOURS + gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL
+    ):
         grib_to_json(run_datetime, tau)
 
 
 def grib_to_json(run_datetime, tau):
     JSON_DIR.mkdir(exist_ok=True)
-    grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime,tau)))
+    grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime, tau)))
     u_data = grib_data.select(name="U component of wind")[0]["values"]
     v_data = grib_data.select(name="V component of wind")[0]["values"]
 
@@ -75,13 +81,15 @@ def grib_to_json(run_datetime, tau):
         json.dump({"gfsData": data_2_deg}, w)
     LOG.info("created %s", json_2_deg_path)
 
+
 def cycle_file_datetime():
     JSON_DIR.mkdir(exist_ok=True)
     try:
         with open(JSON_DIR / "cycle.json", "r") as r:
-            return datetime.strftime(json.load(r)['cycle'], r"%Y%m%d_%H%M%S")
+            return datetime.strftime(json.load(r)["cycle"], r"%Y%m%d_%H%M%S")
     except Exception:
         LOG.warning("Reading cycle file failed.")
+
 
 def write_cycle_file(run_datetime):
     JSON_DIR.mkdir(exist_ok=True)

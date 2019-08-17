@@ -12,7 +12,7 @@ GFS_BASE_DIR = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 LOG = logging.getLogger(__name__)
 GRIB_DIR = Path(__file__).parent.parent / "grib_files"
 GFS_HOURS = 180
-GFS_INTERVAL= 3
+GFS_INTERVAL = 3
 
 
 def get_latest_complete_run():
@@ -70,10 +70,8 @@ def check_cycle_complete(run: datetime):
 
 def download_run(dt):
     GRIB_DIR.mkdir(parents=True, exist_ok=True)
-    for tau in range(0, GFS_HOURS+GFS_INTERVAL, GFS_INTERVAL):
-        file_url = (
-            f"{GFS_BASE_DIR}/gfs.{dt:%Y%m%d}/{dt:%H}/gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}"
-        )
+    for tau in range(0, GFS_HOURS + GFS_INTERVAL, GFS_INTERVAL):
+        file_url = f"{GFS_BASE_DIR}/gfs.{dt:%Y%m%d}/{dt:%H}/gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}"
         req = requests.get(file_url, stream=True)
         if req.status_code == 200:
             with open(grib_file_path(dt, tau), "wb") as w:
@@ -81,11 +79,15 @@ def download_run(dt):
                     w.write(chunk)
         else:
             raise RuntimeError(f"Unable to get {file_url}")
-        LOG.debug("Downloaded %s",grib_file_path(dt, tau))
+        LOG.debug("Downloaded %s", grib_file_path(dt, tau))
     LOG.info("Downloaded GFS run %s", dt)
 
+
 def grib_file_path(run_datetime, tau):
-    return GRIB_DIR/f"gfs_100_{run_datetime:%Y%m%d}_{run_datetime:%H%M}_{tau:03d}.grb2"
+    return (
+        GRIB_DIR / f"gfs_100_{run_datetime:%Y%m%d}_{run_datetime:%H%M}_{tau:03d}.grb2"
+    )
+
 
 def cleanup_grib_files():
     for f in glob.glob(str(GRIB_DIR) + "/*"):
