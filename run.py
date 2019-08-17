@@ -5,7 +5,11 @@ from windvisdata.latest_gfs_to_json import latest_gfs_to_json
 
 log_file = Path(__file__).parent / "wind-vis-data.log"
 
-logging.basicConfig(filename=log_file, level=logging.DEBUG)
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 def main():
