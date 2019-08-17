@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
@@ -85,8 +85,8 @@ def grib_to_json(run_datetime, tau):
 def cycle_file_datetime():
     JSON_DIR.mkdir(exist_ok=True)
     try:
-        with open(JSON_DIR / "cycle.json", "r") as r:
-            return datetime.strftime(json.load(r)["cycle"], r"%Y%m%d_%H%M%S")
+        with open(JSON_DIR / "cycle.json") as r:
+            return datetime.strptime(json.load(r)["cycle"], r"%Y%m%d_%H%M%S")
     except Exception:
         LOG.warning("Reading cycle file failed.")
 
