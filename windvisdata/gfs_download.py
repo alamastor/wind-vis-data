@@ -11,7 +11,7 @@ import requests
 GFS_BASE_DIR = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 LOG = logging.getLogger(__name__)
 GRIB_DIR = Path(__file__).parent.parent / "grib_files"
-GFS_HOURS = 0
+GFS_HOURS = 180
 GFS_INTERVAL= 3
 
 
