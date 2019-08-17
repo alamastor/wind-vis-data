@@ -1,14 +1,19 @@
 import logging
-import sys
-import os
+from pathlib import Path
 
 from windvisdata.latest_gfs_to_json import latest_gfs_to_json
 
-log_file = os.path.dirname(os.path.realpath(__file__)) + '/wind-vis-data.log'
+log_file = Path(__file__).parent / "wind-vis-data.log"
 
-logging.basicConfig(
-    format='%(asctime)-15s %(message)s',
-    filename=log_file,
-    level=logging.INFO)
+logging.basicConfig(filename=log_file, level=logging.DEBUG)
 
-latest_gfs_to_json()
+
+def main():
+    try:
+        latest_gfs_to_json()
+    except Exception:
+        logging.exception("latest_gfs_to_json failed")
+
+
+if __name__ == "__main__":
+    main()

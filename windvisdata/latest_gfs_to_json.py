@@ -1,7 +1,7 @@
-import glob
+import datetime
 import json
 import logging
-import os
+from pathlib import Path
 
 import numpy as np
 import pygrib
@@ -9,63 +9,87 @@ import pygrib
 from . import gfs_download
 
 LOG = logging.getLogger(__name__)
-JSON_DIR = os.path.dirname(os.path.realpath(__file__)) + '/../json_files'
+JSON_DIR = Path(__file__).parent.parent / "json_files"
 
 
 def latest_gfs_to_json():
-    if not os.path.exists(JSON_DIR):
-        os.makedirs(JSON_DIR)
-    cycle = gfs_download.get_latest_cycle()
-    grib_files = []
+    latest_run = gfs_download.get_latest_complete_run()
+    previous_run = cycle_file_datetime()
+    if previous_run and latest_run <= previous_run:
+        LOG.info("Latest run %s has already been processed, doing nothing.",latest_run)
+    LOG.info("Processing latest run %s.",latest_run)
+    gfs_download.download_run(latest_run)
+    gfs_run_to_json(latest_run)
+    write_cycle_file(latest_run)
+    gfs_download.cleanup_grib_files()
+    LOG.info("completed processing run %s", latest_run)
+
+
+def run_max_wind_speed(run_datetime):
     max_wind_speed = 0
-    for i, grib_file_path in enumerate(gfs_download.download_cycle(cycle)):
-        tau = i * 3
-        grib_data = pygrib.open(grib_file_path)
-        u_data = grib_data.select(name='U component of wind')[0]['values']
-        v_data = grib_data.select(name='V component of wind')[0]['values']
-        max_wind_speed = max(
-            np.max(np.sqrt(u_data**2 + v_data**2)), max_wind_speed)
+    for tau in range(0, gfs_download.GFS_HOURS+gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL):
+        grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime,tau)))
+        u_data = grib_data.select(name="U component of wind")[0]["values"]
+        v_data = grib_data.select(name="V component of wind")[0]["values"]
+        max_wind_speed = max(np.max(np.sqrt(u_data ** 2 + v_data ** 2)), max_wind_speed)
+    return max_wind_speed
 
-        data_1_deg = {}
-        data_1_deg['uData'] = []
-        data_1_deg['vData'] = []
-        data_2_deg = {}
-        data_2_deg['uData'] = []
-        data_2_deg['vData'] = []
-        for x in range(360):
-            data_1_deg['uData'].append([])
-            data_1_deg['vData'].append([])
-            if x % 2 == 0:
-                data_2_deg['uData'].append([])
-                data_2_deg['vData'].append([])
+def gfs_run_to_json(run_datetime):
+    for tau in range(0, gfs_download.GFS_HOURS+gfs_download.GFS_INTERVAL, gfs_download.GFS_INTERVAL):
+        grib_to_json(run_datetime, tau)
 
-            for y in range(180, -1, -1):
-                data_1_deg['uData'][x].append(round(float(u_data[y][x])))
-                data_1_deg['vData'][x].append(round(float(v_data[y][x])))
-                if y % 2 == 0:
-                    data_2_deg['uData'][x //
-                                        2].append(round(float(u_data[y][x])))
-                    data_2_deg['vData'][x //
-                                        2].append(round(float(v_data[y][x])))
 
-        json_1_deg_path = (f'{JSON_DIR}/'
-                           f'gfs_100_{cycle:%Y%m%d_%H%M%S}_{tau:03d}.json')
-        with open(json_1_deg_path, 'w') as w:
-            json.dump({'gfsData': data_1_deg}, w)
-        LOG.info(f'created {json_1_deg_path}')
+def grib_to_json(run_datetime, tau):
+    JSON_DIR.mkdir(exist_ok=True)
+    grib_data = pygrib.open(str(gfs_download.grib_file_path(run_datetime,tau)))
+    u_data = grib_data.select(name="U component of wind")[0]["values"]
+    v_data = grib_data.select(name="V component of wind")[0]["values"]
 
-        json_2_deg_path = (f'{JSON_DIR}/'
-                           f'gfs_200_{cycle:%Y%m%d_%H%M%S}_{tau:03d}.json')
-        with open(json_2_deg_path, 'w') as w:
-            json.dump({'gfsData': data_2_deg}, w)
-        LOG.info(f'created {json_2_deg_path}')
+    data_1_deg = {}
+    data_1_deg["uData"] = []
+    data_1_deg["vData"] = []
+    data_2_deg = {}
+    data_2_deg["uData"] = []
+    data_2_deg["vData"] = []
+    for x in range(360):
+        data_1_deg["uData"].append([])
+        data_1_deg["vData"].append([])
+        if x % 2 == 0:
+            data_2_deg["uData"].append([])
+            data_2_deg["vData"].append([])
 
-    with open(f'{JSON_DIR}/cycle.json', 'w') as w:
-        json.dump({
-            'cycle': f'{cycle:%Y%m%d_%H%M%S}',
-            'maxWindSpeed': int(np.ceil(max_wind_speed))
-        }, w)
+        for y in range(180, -1, -1):
+            data_1_deg["uData"][x].append(round(float(u_data[y][x])))
+            data_1_deg["vData"][x].append(round(float(v_data[y][x])))
+            if y % 2 == 0:
+                data_2_deg["uData"][x // 2].append(round(float(u_data[y][x])))
+                data_2_deg["vData"][x // 2].append(round(float(v_data[y][x])))
 
-    for f in glob.glob(gfs_download.GRIB_DIR + '/*'):
-        os.remove(f)
-    LOG.info(f'completed downloading cycle {cycle:%Y%m%d_%H%M%S}')
+    json_1_deg_path = JSON_DIR / f"gfs_100_{run_datetime:%Y%m%d_%H%M%S}_{tau:03d}.json"
+    with open(json_1_deg_path, "w") as w:
+        json.dump({"gfsData": data_1_deg}, w)
+    LOG.info("created %s", json_1_deg_path)
+
+    json_2_deg_path = JSON_DIR / f"gfs_200_{run_datetime:%Y%m%d_%H%M%S}_{tau:03d}.json"
+    with open(json_2_deg_path, "w") as w:
+        json.dump({"gfsData": data_2_deg}, w)
+    LOG.info("created %s", json_2_deg_path)
+
+def cycle_file_datetime():
+    JSON_DIR.mkdir(exist_ok=True)
+    try:
+        with open(JSON_DIR / "cycle.json", "r") as r:
+            return datetime.strftime(json.load(r)['cycle'], r"%Y%m%d_%H%M%S")
+    except Exception:
+        LOG.warning("Reading cycle file failed.")
+
+def write_cycle_file(run_datetime):
+    JSON_DIR.mkdir(exist_ok=True)
+    with open(JSON_DIR / "cycle.json", "w") as w:
+        json.dump(
+            {
+                "cycle": f"{run_datetime:%Y%m%d_%H%M%S}",
+                "maxWindSpeed": int(np.ceil(run_max_wind_speed(run_datetime))),
+            },
+            w,
+        )
