@@ -57,7 +57,7 @@ def get_latest_run_day():
 
 
 def check_cycle_complete(run: datetime):
-    req = requests.get(f"{GFS_BASE_DIR}/gfs.{run:%Y%m%d}/{run:%H}")
+    req = requests.get(f"{GFS_BASE_DIR}/gfs.{run:%Y%m%d}/{run:%H}/atmos", timeout=10)
     soup = BeautifulSoup(req.content, "html.parser")
 
     taus = set()
@@ -72,7 +72,7 @@ def check_cycle_complete(run: datetime):
 def download_run(dt):
     GRIB_DIR.mkdir(parents=True, exist_ok=True)
     for tau in range(0, GFS_HOURS + GFS_INTERVAL, GFS_INTERVAL):
-        file_url = f"{GFS_BASE_DIR}/gfs.{dt:%Y%m%d}/{dt:%H}/gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}"
+        file_url = f"{GFS_BASE_DIR}/gfs.{dt:%Y%m%d}/{dt:%H}/atmos/gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}"
         req = requests.get(file_url, stream=True)
         if req.status_code == 200:
             with open(grib_file_path(dt, tau), "wb") as w:
