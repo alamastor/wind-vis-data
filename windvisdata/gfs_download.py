@@ -13,11 +13,12 @@ LOG = logging.getLogger(__name__)
 GRIB_DIR = Path(__file__).parent.parent / "grib_files"
 GFS_HOURS = 180
 GFS_INTERVAL = 3
+EARLIEST_ALLOWED_RUN =  datetime(2021, 6, 1)
 
 
 def get_latest_complete_run():
     run_datetime = get_latest_run()
-    while run_datetime > datetime(2000, 1, 1):
+    while run_datetime > EARLIEST_ALLOWED_RUN:
         if check_cycle_complete(run_datetime):
             return run_datetime
         run_datetime -= timedelta(hours=6)
