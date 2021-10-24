@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  wind-vis-data:
+    build:
+      context: .
+    volumes:
+      - type: bind
+        source: ./logs
+        target: /app/logs
+      - type: bind
+        source: ./grib_files
+        target: /app/grib_files
+      - type: bind
+        source: ./json_files
+        target: /app/json_files

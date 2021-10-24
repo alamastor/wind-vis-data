@@ -3,7 +3,9 @@ from pathlib import Path
 
 from windvisdata.latest_gfs_to_json import latest_gfs_to_json
 
-log_file = Path(__file__).parent / "wind-vis-data.log"
+log_dir = Path(__file__).parent /'logs'
+log_dir.mkdir(exist_ok=True)
+log_file = log_dir / "wind-vis-data.log"
 
 logging.basicConfig(
     filename=log_file,
