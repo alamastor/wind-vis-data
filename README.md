@@ -1,10 +1,10 @@
-### Dev run
+### Run
 
 `docker compose up -d`
 
-### Prod run
+### In prod
 
-`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
+Copy `docker-compose.override.example.yml` to `docker-compose.override.yml` and set SENTRY_URL to as sentry project url.
 
 ### Stop
 

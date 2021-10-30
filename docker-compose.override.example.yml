@@ -1,0 +1,5 @@
+services:
+  wind-vis-data:
+    environment:
+      SENTRY_URL: https://my-sentry-endpoint
+    restart: always

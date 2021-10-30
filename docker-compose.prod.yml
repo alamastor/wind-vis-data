@@ -1,3 +1,0 @@
-services:
-  wind-vis-data:
-    restart: always

@@ -4,3 +4,4 @@ json_files
 __pycache__
 *.log
 *.swp
+docker-compose.override.yml
