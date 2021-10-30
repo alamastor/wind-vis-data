@@ -39,7 +39,7 @@ RUN apt-get update && apt-get upgrade -y \
 
 WORKDIR /build
 
-# Install ECCodes
+# Install ECCodes - required for pygrib
 RUN wget https://confluence.ecmwf.int/download/attachments/45757960/eccodes-2.23.0-Source.tar.gz
 RUN tar -xvzf eccodes-2.23.0-Source.tar.gz
 RUN cmake ./eccodes-2.23.0-Source -DCMAKE_INSTALL_PREFIX=/usr/lib/eccodes
@@ -49,10 +49,12 @@ RUN make install
 
 WORKDIR /app
 
-COPY ./poetry.lock ./pyproject.toml ./run.py /app/
-COPY ./windvisdata /app/windvisdata//
+COPY ./poetry.lock ./pyproject.toml /app/
+COPY ./windvisdata /app/windvisdata/
 
 RUN poetry version \
   && poetry install \
   && poetry run pip install -U pip \
   && rm -rf "${POETRY_CACHE_DIR}"
+
+ENTRYPOINT ["windvisdata"]

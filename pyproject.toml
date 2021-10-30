@@ -1,19 +1,22 @@
 [tool.poetry]
-name = "wind_vis_data"
-version = "0.1.0"
-description = ""
 authors = ["Alistair McKelvie <alistair.mckelvie@gmail.com>"]
+description = ""
+name = "windvisdata"
+version = "0.1.0"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "^1.21"
 beautifulsoup4 = "^4.10.0"
-requests = "^2.26.0"
+numpy = "^1.21"
 pygrib = "^2.1.4"
+python = "^3.9"
+requests = "^2.26.0"
 
 [tool.poetry.dev-dependencies]
 pudb = "^2021.1"
 
+[tool.poetry.scripts]
+windvisdata = 'windvisdata.run:run'
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]

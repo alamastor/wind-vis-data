@@ -80,7 +80,7 @@ def download_run(dt):
                     w.write(chunk)
         else:
             raise RuntimeError(f"Unable to get {file_url}")
-        LOG.debug("Downloaded %s", grib_file_path(dt, tau))
+        LOG.info("Downloaded %s", grib_file_path(dt, tau))
     LOG.info("Downloaded GFS run %s", dt)
 
 
