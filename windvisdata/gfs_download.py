@@ -1,19 +1,19 @@
-from datetime import datetime, timedelta
 import glob
 import logging
 import os
 import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 GFS_BASE_DIR = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 LOG = logging.getLogger(__name__)
 GRIB_DIR = Path(__file__).parent.parent / "grib_files"
 GFS_HOURS = 180
 GFS_INTERVAL = 3
-EARLIEST_ALLOWED_RUN =  datetime(2021, 6, 1)
+EARLIEST_ALLOWED_RUN = datetime(2021, 6, 1)
 
 
 def get_latest_complete_run():

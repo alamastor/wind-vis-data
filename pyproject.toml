@@ -13,6 +13,9 @@ requests = "^2.26.0"
 sentry-sdk = "^1.4.3"
 
 [tool.poetry.dev-dependencies]
+black = "^21.9b0"
+isort = "^5.9.3"
+pre-commit = "^2.15.0"
 pudb = "^2021.1"
 
 [tool.poetry.scripts]
@@ -21,3 +24,6 @@ windvisdata = 'windvisdata.run:run'
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core>=1.0.0"]
+
+[tool.isort]
+profile = "black"
