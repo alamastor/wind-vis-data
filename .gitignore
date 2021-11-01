@@ -5,3 +5,4 @@ __pycache__
 *.log
 *.swp
 docker-compose.override.yml
+.vscode
