@@ -3,7 +3,7 @@ import os
 import time
 import itertools
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import sentry_sdk
 
@@ -12,6 +12,7 @@ from . import gfs_download, metadata, grib_data
 
 JSON_DIR = Path(__file__).parent.parent / "json_files"
 JSON_DIR.mkdir(exist_ok=True)
+JSON_KEEP_WINDOW = timedelta(hours=48)
 LOG = logging.getLogger(__name__)
 SLEEP_TIME = 5 * 60
 
@@ -43,6 +44,7 @@ def run():
             raise
 
         grib_data.purge_all_grib_files()
+        clean_up_old_json_files()
         LOG.debug("Waiting for %s seconds." % SLEEP_TIME)
         time.sleep(SLEEP_TIME)
 
@@ -103,5 +105,17 @@ def _try_to_download():
 def json_file_path(run_datetime: datetime, tau: int, resolution: float, param: str):
     return (
         JSON_DIR
-        / f"gfs_{resolution*100:03d}_{run_datetime:%Y%m%d_%H%M%S}_{tau:03d}_{param}.json"
+        / f"gfs_{resolution*100:03d}_{run_datetime.replace(tzinfo=timezone.utc).isoformat()}_{tau:03d}_{param}.json"
     )
+
+
+def json_file_run(json_file: Path):
+    return datetime.fromisoformat(json_file.name.split("_")[2]).replace(tzinfo=None)
+
+
+def clean_up_old_json_files():
+    latest_cycle = metadata.read_run_datetime(METADATA_FILE)
+    if latest_cycle is not None:
+        for file in JSON_DIR.glob("gfs_*.json"):
+            if json_file_run(file) < latest_cycle - JSON_KEEP_WINDOW:
+                file.unlink()
