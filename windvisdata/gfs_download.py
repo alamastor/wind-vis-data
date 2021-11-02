@@ -1,33 +1,41 @@
-import glob
 import logging
-import os
+from pathlib import Path
 import re
 from datetime import datetime, timedelta
-from pathlib import Path
+from typing import Type
 
 import requests
 from bs4 import BeautifulSoup
 
-GFS_BASE_DIR = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
+
+GFS_BASE_DIR_URL = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 LOG = logging.getLogger(__name__)
-GRIB_DIR = Path(__file__).parent.parent / "grib_files"
-GFS_HOURS = 180
-GFS_INTERVAL = 3
 EARLIEST_ALLOWED_RUN = datetime(2021, 6, 1)
 
 
-def get_latest_complete_run():
-    run_datetime = get_latest_run()
+def download_grib_file(run_datetime: datetime, tau: int, *, target_file: Path) -> None:
+    req = requests.get(_grib_file_url(run_datetime, tau), stream=True)
+    if req.status_code == 200:
+        with open(target_file, "wb") as w:
+            for chunk in req.iter_content(1024):
+                w.write(chunk)
+    else:
+        raise RuntimeError(f"Unable to get {_grib_file_url(run_datetime, tau)}")
+    LOG.info("Downloaded %s", target_file)
+
+
+def get_latest_complete_run() -> datetime:
+    run_datetime = _get_latest_run()
     while run_datetime > EARLIEST_ALLOWED_RUN:
-        if check_cycle_complete(run_datetime):
+        if _complete_run_available(run_datetime):
             return run_datetime
         run_datetime -= timedelta(hours=6)
     raise RuntimeError("No complete GFS cycles found.")
 
 
-def get_latest_run():
-    latest_day = get_latest_run_day()
-    req = requests.get(GFS_BASE_DIR + f"/gfs.{latest_day:%Y%m%d}/")
+def _get_latest_run() -> datetime:
+    latest_day = _get_latest_run_day()
+    req = requests.get(GFS_BASE_DIR_URL + f"/gfs.{latest_day:%Y%m%d}/")
     soup = BeautifulSoup(req.content, "html.parser")
     hours = set()
     for link in soup.find_all("a"):
@@ -41,8 +49,8 @@ def get_latest_run():
     return latest_run
 
 
-def get_latest_run_day():
-    req = requests.get(GFS_BASE_DIR)
+def _get_latest_run_day():
+    req = requests.get(GFS_BASE_DIR_URL)
     soup = BeautifulSoup(req.content, "html.parser")
     days = set()
     for link in soup.find_all("a"):
@@ -56,8 +64,10 @@ def get_latest_run_day():
     return latest_day
 
 
-def check_cycle_complete(run: datetime):
-    req = requests.get(f"{GFS_BASE_DIR}/gfs.{run:%Y%m%d}/{run:%H}/atmos", timeout=10)
+def _complete_run_available(run: datetime):
+    req = requests.get(
+        f"{GFS_BASE_DIR_URL}/gfs.{run:%Y%m%d}/{run:%H}/atmos", timeout=10
+    )
     soup = BeautifulSoup(req.content, "html.parser")
 
     taus = set()
@@ -69,27 +79,8 @@ def check_cycle_complete(run: datetime):
     return all(x in taus for x in range(0, 243, 3))
 
 
-def download_run(dt):
-    GRIB_DIR.mkdir(parents=True, exist_ok=True)
-    for tau in range(0, GFS_HOURS + GFS_INTERVAL, GFS_INTERVAL):
-        file_url = f"{GFS_BASE_DIR}/gfs.{dt:%Y%m%d}/{dt:%H}/atmos/gfs.t{dt:%H}z.pgrb2.1p00.f{tau:03d}"
-        req = requests.get(file_url, stream=True)
-        if req.status_code == 200:
-            with open(grib_file_path(dt, tau), "wb") as w:
-                for chunk in req.iter_content(1024):
-                    w.write(chunk)
-        else:
-            raise RuntimeError(f"Unable to get {file_url}")
-        LOG.info("Downloaded %s", grib_file_path(dt, tau))
-    LOG.info("Downloaded GFS run %s", dt)
-
-
-def grib_file_path(run_datetime, tau):
+def _grib_file_url(run_datetime: datetime, tau: int):
     return (
-        GRIB_DIR / f"gfs_100_{run_datetime:%Y%m%d}_{run_datetime:%H%M}_{tau:03d}.grb2"
+        f"{GFS_BASE_DIR_URL}/gfs.{run_datetime:%Y%m%d}/"
+        f"{run_datetime:%H}/atmos/gfs.t{run_datetime:%H}z.pgrb2.1p00.f{tau:03d}"
     )
-
-
-def cleanup_grib_files():
-    for f in glob.glob(str(GRIB_DIR) + "/*"):
-        os.remove(f)
