@@ -30,7 +30,7 @@ logging.basicConfig(
 PARAMS = [
     ("U component of wind", "wind_u_sfc", "m s**-1"),
     ("V component of wind", "wind_v_sfc", "m s**-1"),
-    ("Temperature", "temp", "K"),
+    ("Temperature", "temp_sfc", "K"),
 ]
 RESOLUTIONS = [1, 2]
 
