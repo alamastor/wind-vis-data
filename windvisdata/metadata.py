@@ -26,6 +26,6 @@ def create_metadata_file(
 def read_run_datetime(metadata_file: Path):
     try:
         with open(metadata_file) as r:
-            return datetime.fromisoformat(json.load(r)["run"])
+            return datetime.fromisoformat(json.load(r)["run"]).replace(tzinfo=None)
     except Exception:
         LOG.warning("Reading cycle file failed.")
