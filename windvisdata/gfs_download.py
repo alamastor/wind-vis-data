@@ -2,9 +2,9 @@ import logging
 from pathlib import Path
 import re
 from datetime import datetime, timedelta
-from typing import Type
 
 import requests
+from tenacity import retry, wait_random_exponential, stop_after_attempt
 from bs4 import BeautifulSoup
 
 
@@ -12,7 +12,12 @@ GFS_BASE_DIR_URL = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 LOG = logging.getLogger(__name__)
 EARLIEST_ALLOWED_RUN = datetime(2021, 6, 1)
 
+standard_retry = retry(
+    wait=wait_random_exponential(multiplier=1, max=60), stop=stop_after_attempt(10)
+)
 
+
+@standard_retry
 def download_grib_file(run_datetime: datetime, tau: int, *, target_file: Path) -> None:
     req = requests.get(_grib_file_url(run_datetime, tau), stream=True)
     if req.status_code == 200:
@@ -24,6 +29,7 @@ def download_grib_file(run_datetime: datetime, tau: int, *, target_file: Path) -
     LOG.info("Downloaded %s", target_file)
 
 
+@standard_retry
 def get_latest_complete_run() -> datetime:
     run_datetime = _get_latest_run()
     while run_datetime > EARLIEST_ALLOWED_RUN:
