@@ -54,7 +54,6 @@ COPY ./windvisdata /app/windvisdata/
 
 RUN poetry version \
   && poetry install \
-  && poetry run pip install -U pip \
   && rm -rf "${POETRY_CACHE_DIR}"
 
 ENTRYPOINT ["windvisdata"]
