@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [tool.poetry.dependencies]
 beautifulsoup4 = "^4.10.0"
-numpy = "^1.21"
+numpy = "^1.22"
 pygrib = "^2.1.4"
 python = "^3.9"
 requests = "^2.26.0"
